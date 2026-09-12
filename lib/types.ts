@@ -1,0 +1,12 @@
+import type { CardInput } from 'ts-fsrs';
+export type Problem = {id:string;title:string;topic:string;topicOrder:number;section:string;order:number;difficulty:string;article:string|null;video:string|null;url:string|null};
+export type Outcome = 'solved'|'assisted'|'retry';
+export type StudyRecord = {problemId:string;status:'in-progress'|Outcome;code:string;notes:string;mistake:string;language:string;updatedAt:number;solveDue:number|null;solveStreak:number;version:number};
+export type Attempt = {id:string;problemId:string;outcome:Outcome;minutes:number;at:number;code:string;notes:string;mistake:string;language:string};
+export type RecallCard = {id:string;problemId:string;front:string;back:string;schedule:CardInput;updatedAt:number;version:number};
+export type RecallReview = {id:string;cardId:string;problemId:string;rating:number;at:number;log:unknown};
+export type Attachment = {id:string;problemId:string;name:string;mime:string;size:number;key:string;createdAt:number;sha?:string};
+export type Settings = {dailyMinutes:number;targetDate:string;startedAt:number;repository:string;branch:string;autoSync:boolean;connected:boolean;syncVersion:number;lastSyncVersion:number;lastSyncAt:number|null;lastSyncCommit:string|null;syncError:string|null};
+export type StudyState = {records:StudyRecord[];attempts:Attempt[];cards:RecallCard[];reviews:RecallReview[];attachments:Attachment[];settings:Settings};
+export type Backup = {format:'recall-backup';version:1;exportedAt:number;catalogSource:string;records:StudyRecord[];attempts:Attempt[];cards:RecallCard[];reviews:RecallReview[];attachments:Attachment[]};
+export const emptyRecord=(problemId:string):StudyRecord=>({problemId,status:'in-progress',code:'',notes:'',mistake:'',language:'cpp',updatedAt:0,solveDue:null,solveStreak:0,version:0});
