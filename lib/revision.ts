@@ -13,6 +13,15 @@ export function nextSolve(outcome:Outcome,streak:number,now=Date.now()){
   return {solveStreak:nextStreak,solveDue:now+days*86_400_000};
 }
 export function localDay(time:number,timezone='Asia/Kolkata'){return new Intl.DateTimeFormat('en-CA',{timeZone:timezone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(time));}
+export function scheduleLabel(time:number|string|Date|null,now=Date.now()){
+  if(time===null)return 'Not scheduled';
+  const due=new Date(time).getTime(),remaining=due-now;
+  if(remaining<=0)return 'Due now';
+  if(remaining<60_000)return 'In a minute';
+  if(remaining<3_600_000)return `In ${Math.ceil(remaining/60_000)} min`;
+  const days=Math.round((Date.parse(localDay(due))-Date.parse(localDay(now)))/86_400_000);
+  return days===0?'Later today':days===1?'Tomorrow':`In ${days} days`;
+}
 export function dueWork(state:StudyState,now=Date.now()){
   return {cards:state.cards.filter(c=>new Date(c.schedule.due).getTime()<=now).sort((a,b)=>new Date(a.schedule.due).getTime()-new Date(b.schedule.due).getTime()),solves:state.records.filter(r=>r.solveDue!==null&&r.solveDue<=now).sort((a,b)=>a.solveDue!-b.solveDue!)};
 }

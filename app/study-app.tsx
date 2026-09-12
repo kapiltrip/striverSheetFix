@@ -14,7 +14,7 @@ import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/comp
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import catalog from '@/lib/catalog.json';
-import { chooseNext,dueWork,localDay,sessionBudget,weeklySummary } from '@/lib/revision';
+import { chooseNext,dueWork,localDay,scheduleLabel,sessionBudget,weeklySummary } from '@/lib/revision';
 import { emptyRecord,type Problem,type StudyState,type StudyRecord,type Outcome,type RecallCard,type Settings } from '@/lib/types';
 
 const problems=catalog.problems as Problem[];
@@ -23,7 +23,7 @@ const shortTopics=['Basics','Sorting','Arrays','Binary search','Strings','Linked
 const nav=[{id:'today',label:'Today',icon:Play},{id:'sheet',label:'Problem sheet',icon:ListChecks},{id:'revision',label:'Revision',icon:Layers3},{id:'github',label:'GitHub',icon:GitBranch}];
 const statusLabel:Record<string,string>={'in-progress':'In progress',solved:'Solved unaided',assisted:'Used a hint',retry:'Try again'};
 const languages=[['cpp','C++'],['java','Java'],['python','Python'],['javascript','JavaScript'],['typescript','TypeScript'],['c','C']];
-function when(time:number|string|Date|null){if(time===null)return 'Not scheduled';const days=Math.ceil((new Date(time).getTime()-Date.now())/86400000);return days<=0?'Due now':days===1?'Tomorrow':`In ${days} days`;}
+const when=scheduleLabel;
 function dateTime(time:number){return new Date(time).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}
 async function api<T=StudyState>(url:string,body?:unknown):Promise<T>{const response=await fetch(url,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:undefined,body:body?JSON.stringify(body):undefined,cache:'no-store',signal:AbortSignal.timeout(30000)});const data=await response.json() as T & {error?:string};if(!response.ok)throw Object.assign(new Error(data.error||'Please try again.'),{status:response.status});return data;}
 function Choice({value,onChange,options,label}:{value:string;onChange:(v:string)=>void;options:string[][];label:string}){return <Select value={value} onValueChange={onChange}><SelectTrigger aria-label={label}><SelectValue/></SelectTrigger><SelectContent>{options.map(([v,label])=><SelectItem key={v} value={v}>{label}</SelectItem>)}</SelectContent></Select>;}

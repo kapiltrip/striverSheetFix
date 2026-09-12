@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import catalog from '../lib/catalog.json';
-import { chooseNext,dueWork,localDay,newSchedule,nextSolve,rateRecall,weeklySummary } from '../lib/revision';
+import { chooseNext,dueWork,localDay,newSchedule,nextSolve,rateRecall,scheduleLabel,weeklySummary } from '../lib/revision';
 import { makeBackup,textFiles } from '../lib/backup';
 import { emptyRecord,type StudyState,type Settings,type Problem } from '../lib/types';
 const now=Date.UTC(2026,8,12,8);
@@ -10,6 +10,7 @@ const state=():StudyState=>({records:[],attempts:[],cards:[],reviews:[],attachme
 test('the source catalogue is complete, unique, and uses HTTPS links',()=>{assert.equal(catalog.problems.length,474);assert.equal(new Set(catalog.problems.map(p=>p.id)).size,474);for(const p of catalog.problems){for(const url of [p.url,p.article,p.video].filter(Boolean))assert.equal(new URL(url!).protocol,'https:');}});
 test('forgotten recall returns earlier than successful recall',()=>{const card=newSchedule(now);const again=rateRecall(card,1,now),good=rateRecall(card,3,now);assert.ok(again.card.due.getTime()<good.card.due.getTime());assert.equal(again.log.rating,1);assert.throws(()=>rateRecall(card,0,now));});
 test('recall scheduling survives a JSON round trip',()=>{const initial=rateRecall(newSchedule(now),3,now);const restored=JSON.parse(JSON.stringify(initial.card));const next=rateRecall(restored,3,now+10*86400000);assert.equal(next.card.reps,2);assert.ok(next.card.due.getTime()>now+10*86400000);});
+test('short learning intervals show minutes and calendar dates use India time',()=>{assert.equal(scheduleLabel(now-1,now),'Due now');assert.equal(scheduleLabel(now+10*60_000,now),'In 10 min');assert.equal(scheduleLabel(now+2*3_600_000,now),'Later today');const late=Date.UTC(2026,8,12,18);assert.equal(scheduleLabel(late+2*3_600_000,late),'Tomorrow');assert.equal(scheduleLabel(late+26*3_600_000,late),'In 2 days');});
 test('coding retries and assisted solves reset their independent streak',()=>{assert.deepEqual(nextSolve('retry',5,now),{solveStreak:0,solveDue:now+86400000});assert.equal(nextSolve('assisted',4,now).solveDue,now+2*86400000);assert.equal(nextSolve('solved',1,now).solveDue,now+7*86400000);});
 test('unfinished work and overdue coding take priority over new problems',()=>{const s=state();const p=catalog.problems as Problem[];s.records=[{...emptyRecord(p[5].id),updatedAt:now,version:1}];assert.equal(chooseNext(p,s,now)?.problem.id,p[5].id);s.records=[{...s.records[0],status:'retry',solveDue:now-1}];assert.equal(chooseNext(p,s,now)?.problem.id,p[5].id);assert.equal(dueWork(s,now).solves.length,1);});
 test('India study-day boundaries and observed weekly recall are explicit',()=>{assert.equal(localDay(Date.UTC(2026,8,11,19)),'2026-09-12');const s=state();s.reviews=[{id:'a',cardId:'b',problemId:'425',rating:1,at:now,log:{}},{id:'c',cardId:'b',problemId:'425',rating:2,at:now,log:{}}];assert.equal(weeklySummary(s,now).recall,50);assert.equal(weeklySummary(state(),now).recall,null);});
