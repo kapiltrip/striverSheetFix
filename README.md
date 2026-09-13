@@ -2,6 +2,11 @@
 
 A private study app for Kapil’s 45–60 minute sessions. The current A2Z catalogue contains 474 problems, with links back to takeUforward and the exercise platforms.
 
+On Windows, double-click `Open-Striver.cmd` to open your existing private
+[Recall workspace](https://kapil-dsa-practice.kapiltripathi267.chatgpt.site) in
+Chrome. This uses the online app's saved progress. The local source and
+development data in this folder remain separate from the hosted database.
+
 [Study flow](#study-flow) · [GitHub backups](#github-backups) · [Development](#development) · [Verification](#verification)
 
 ## Study flow
