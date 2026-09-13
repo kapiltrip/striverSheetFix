@@ -8,6 +8,8 @@ A private study app for Kapil’s 45–60 minute sessions. The current A2Z catal
 
 Today recommends unfinished work, due coding reattempts, then the next unvisited A2Z problem. A problem notebook keeps code, approach notes, mistakes, original images, PDFs, and attempt history together. Drafts autosave to the server; an unsuccessful save preserves the editor and blocks navigation away from it.
 
+Each problem notebook shows a concise question summary and a little context before the editor, so the task is visible without leaving the study flow. The original exercise remains linked for its complete examples and constraints. Question text is searchable from the problem sheet.
+
 Recall cards use FSRS. The user attempts an answer before revealing it and then rates recall. Coding reattempts are separate: failed attempts return after one day, assisted attempts after two, and independent successes after 3, 7, 14, 30, then 60 days. Results are self-reported; code is run and submitted on the linked exercise platform.
 
 Daily summaries use Asia/Kolkata dates. Weekly metrics report actual attempts and recall ratings. Fresh accounts start with no invented progress.
@@ -28,6 +30,8 @@ The app uses React/TypeScript, Vinext, Cloudflare D1 and R2, and ts-fsrs. Hosted
 2. Copy .env.example to .env and set GITHUB_ENCRYPTION_KEY to 32 cryptographically random bytes encoded as hex. Keep the same key when redeploying so stored connections remain readable.
 3. Build once with `npm run build`, then apply `drizzle/0000_fair_shape.sql` to the local D1 database using the generated `dist/server/wrangler.json` configuration and `.wrangler/state` persistence directory.
 4. Start with `npm run dev`. The local preview offers a simulated sign-in; production uses the Sites owner’s identity.
+
+Run `npm run catalog:questions` when the source catalogue changes to refresh the concise in-app question summaries from the linked exercise or lesson pages.
 
 The GitHub token is entered in the app, never placed in source files. Production encryption configuration is managed as a Sites secret. App data is stored in D1/R2; the browser is not the authoritative database. Internet connectivity is required for saved study data and backups.
 
