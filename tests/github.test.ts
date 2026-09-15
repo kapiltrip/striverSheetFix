@@ -21,15 +21,15 @@ class DB{
   prepare(sql:string){return new Statement(this.raw,sql);}
   async batch(statements:Statement[]){this.raw.exec('BEGIN');try{const results=[];for(const s of statements)results.push(await s.execute());this.raw.exec('COMMIT');return results;}catch(e){this.raw.exec('ROLLBACK');throw e;}}
 }
-test('GitHub backup, failure recovery, idempotence, privacy, and restore preserve data',async()=>{
+test('GitHub backup, failure recovery, idempotence, secret privacy, and restore preserve data',async()=>{
   const db=new DB();env.DB=db;env.GITHUB_ENCRYPTION_KEY='a'.repeat(64);
   const objects=new Map<string,Buffer>();env.BUCKET={async get(key:string){const value=objects.get(key);return value?{arrayBuffer:async()=>Uint8Array.from(value).buffer}:null;},async put(key:string,value:Uint8Array){objects.set(key,Buffer.from(value));}};
   let head='initial',counter=0,failRef=false;const blobs=new Map<string,Buffer>(),trees=new Map<string,Map<string,string>>([['root',new Map([['README.md','original-readme']])]]),commits=new Map([['initial',{tree:{sha:'root'}}]]);const writes:any[]=[];
   const originalFetch=globalThis.fetch;
   globalThis.fetch=(async(input:any,init:any={})=>{
     const url=new URL(String(input)),method=init.method||'GET',body=init.body?JSON.parse(init.body):undefined;
-    assert.equal(url.hostname,'api.github.com');const path=url.pathname.replace('/repos/kapiltrip/dsa-study-notes','');let result:any;
-    if(!path){result={private:true,permissions:{push:true},full_name:'kapiltrip/dsa-study-notes',default_branch:'main'};}
+    assert.equal(url.hostname,'api.github.com');const path=url.pathname.replace('/repos/kapiltrip/cpp-and-scripting-practice','');let result:any;
+    if(!path){result={private:false,permissions:{push:true},full_name:'kapiltrip/cpp-and-scripting-practice',default_branch:'main'};}
     else if(path==='/git/ref/heads/main'){result={object:{sha:head}};}
     else if(path.startsWith('/git/commits/')&&method==='GET'){result=commits.get(path.split('/').pop()!);}
     else if(path.startsWith('/git/trees/')&&method==='GET'){result={truncated:false,tree:[...trees.get(path.split('/').pop()!)!].map(([path,sha])=>({path,sha,type:'blob'}))};}
@@ -47,7 +47,7 @@ test('GitHub backup, failure recovery, idempotence, privacy, and restore preserv
     await db.prepare('INSERT INTO records (user_id,problem_id,data,version) VALUES (?,?,?,?)').bind('alice','425',JSON.stringify(record),1).run();
     const photo={id:'b11ad29a-d8b8-4d41-863a-928b7cc0cc55',problemId:'425',name:'original.png',mime:'image/png',size:3,key:'alice/original.png',createdAt:100};objects.set(photo.key,Buffer.from([1,2,3]));
     await db.prepare('INSERT INTO attachments (id,user_id,problem_id,data) VALUES (?,?,?,?)').bind(photo.id,'alice','425',JSON.stringify(photo)).run();
-    await connectGithub('alice','kapiltrip/dsa-study-notes','github_pat_TEST_SECRET');
+    await connectGithub('alice','kapiltrip/cpp-and-scripting-practice','github_pat_TEST_SECRET');
     const stored=await db.prepare('SELECT token FROM settings WHERE user_id=?').bind('alice').first() as {token:string};assert.ok(!stored.token.includes('TEST_SECRET'));
     const result=await syncWorkspace('alice');assert.equal(result.status,'synced');assert.equal(writes.length,1);assert.equal((await loadState('alice')).settings.lastSyncVersion,0);
     const currentTree=trees.get(commits.get(head)!.tree.sha)!;assert.equal(currentTree.get('README.md'),'original-readme');

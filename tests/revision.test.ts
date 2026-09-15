@@ -6,7 +6,7 @@ import { chooseNext,dueWork,localDay,newSchedule,nextSolve,planLoad,rateRecall,s
 import { makeBackup,textFiles } from '../lib/backup';
 import { emptyRecord,type StudyState,type Settings,type Problem } from '../lib/types';
 const now=Date.UTC(2026,8,12,8);
-const settings:Settings={dailyMinutes:52,startDate:'2026-09-21',targetDate:'2027-04-12',startedAt:now,repository:'kapiltrip/dsa-study-notes',branch:'main',autoSync:true,connected:false,syncVersion:0,lastSyncVersion:-1,lastSyncAt:null,lastSyncCommit:null,syncError:null};
+const settings:Settings={dailyMinutes:52,startDate:'2026-09-21',targetDate:'2027-04-12',startedAt:now,repository:'kapiltrip/cpp-and-scripting-practice',branch:'main',autoSync:true,connected:false,syncVersion:0,lastSyncVersion:-1,lastSyncAt:null,lastSyncCommit:null,syncError:null};
 const state=():StudyState=>({records:[],attempts:[],cards:[],reviews:[],attachments:[],settings});
 test('the source catalogue is complete, unique, and uses HTTPS links',()=>{assert.equal(catalog.problems.length,474);assert.equal(new Set(catalog.problems.map(p=>p.id)).size,474);for(const p of catalog.problems){for(const url of [p.url,p.article,p.video].filter(Boolean))assert.equal(new URL(url!).protocol,'https:');}});
 test('every catalogue problem has a concise readable question summary',()=>{const questions=questionSummaries as Record<string,string>;assert.equal(Object.keys(questions).length,catalog.problems.length);for(const problem of catalog.problems){const question=questions[problem.id];assert.ok(question,`Missing question for ${problem.title}`);assert.ok(question.split(/\s+/).length<=24,`Question is too long for ${problem.title}`);assert.doesNotMatch(question,/<[^>]+>|Solve this DSA problem on takeUforward/);}});

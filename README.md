@@ -1,6 +1,6 @@
 # Recall — DSA practice
 
-A private study app for Kapil’s 45–60 minute sessions. The current A2Z catalogue contains 474 problems, with links back to takeUforward and the exercise platforms.
+A personal study app for Kapil’s 45–60 minute sessions. The current A2Z catalogue contains 474 problems, with links back to takeUforward and the exercise platforms.
 
 On Windows, double-click `Open-Striver.cmd` to open your existing private
 [Recall workspace](https://kapil-dsa-practice.kapiltripathi267.chatgpt.site) in
@@ -21,7 +21,7 @@ Daily summaries use Asia/Kolkata dates. Weekly metrics report actual attempts an
 
 ## GitHub backups
 
-The app is configured for the private repository `kapiltrip/dsa-study-notes`. Connect in the GitHub view using a fine-grained token restricted to that repository, with Contents: Read and write. The token is encrypted with AES-GCM on the server and is never included in the backup.
+The app is configured to store its readable backups under `recall/` in the public repository `kapiltrip/cpp-and-scripting-practice`. Connect in the GitHub view using a fine-grained token restricted to that repository, with Contents: Read and write. The token is encrypted with AES-GCM on the server and is never included in the backup.
 
 Automatic backups run after attempts, recall reviews, and attachments. Pending work retries while the app is open; Back up now performs an immediate attempt. The server records success only after updating the Git reference. Existing files outside the app’s `recall/` directory are preserved, and reference updates never force-push.
 

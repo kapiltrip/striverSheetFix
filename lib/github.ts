@@ -5,7 +5,7 @@ import { AppError,bucket,bump,database,ensureUser,loadState } from './server';
 import { imagePath,makeBackup,textFiles } from './backup';
 import type { Attachment,Backup,Settings } from './types';
 const encoder=new TextEncoder();
-export const repoSchema=z.string().regex(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/,'Use owner/repository, such as kapiltrip/dsa-study-notes.');
+export const repoSchema=z.string().regex(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/,'Use owner/repository, such as kapiltrip/cpp-and-scripting-practice.');
 async function encryptionKey(){const hex=env.GITHUB_ENCRYPTION_KEY;if(!hex||!/^[a-f0-9]{64}$/.test(hex))throw new AppError('GitHub connection is being configured. Your study work is saved.',503);return crypto.subtle.importKey('raw',Buffer.from(hex,'hex'),'AES-GCM',false,['encrypt','decrypt']);}
 async function encrypt(token:string,userId:string){const iv=crypto.getRandomValues(new Uint8Array(12));const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:encoder.encode(userId)},await encryptionKey(),encoder.encode(token));return `${Buffer.from(iv).toString('base64')}.${Buffer.from(cipher).toString('base64')}`;}
 async function decrypt(value:string,userId:string){try{const [iv,cipher]=value.split('.');const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:Buffer.from(iv,'base64'),additionalData:encoder.encode(userId)},await encryptionKey(),Buffer.from(cipher,'base64'));return new TextDecoder().decode(plain);}catch{throw new AppError('Reconnect GitHub to resume backups.',401);}}
@@ -14,10 +14,10 @@ async function github(token:string,path:string,method='GET',body?:unknown,raw=fa
   if(!response.ok){if(response.status===401)throw new AppError('Your GitHub token expired or was revoked. Reconnect to resume backups.',401);if(response.status===403)throw new AppError('GitHub denied the backup. Check the token’s Contents access, expiry, or rate limit.',403);if(response.status===404)throw new AppError('GitHub could not find the repository or backup. Check repository access.',404);throw new AppError(`GitHub could not finish the backup (${response.status}). Your saved work is safe; try again.`,response.status===409||response.status===422?409:502);}
   return response.json();
 }
-async function connection(userId:string){await ensureUser(userId);const row=await database().prepare('SELECT data,token,sync_lock_until FROM settings WHERE user_id=?').bind(userId).first<{data:string;token:string|null;sync_lock_until:number}>();if(!row?.token)throw new AppError('Connect your private GitHub repository first.');const settings:Settings=JSON.parse(row.data);return {settings,token:await decrypt(row.token,userId),lock:row.sync_lock_until};}
+async function connection(userId:string){await ensureUser(userId);const row=await database().prepare('SELECT data,token,sync_lock_until FROM settings WHERE user_id=?').bind(userId).first<{data:string;token:string|null;sync_lock_until:number}>();if(!row?.token)throw new AppError('Connect your GitHub repository first.');const settings:Settings=JSON.parse(row.data);return {settings,token:await decrypt(row.token,userId),lock:row.sync_lock_until};}
 export async function connectGithub(userId:string,repository:string,token:string){
   repoSchema.parse(repository);if(!token||token.length>500)throw new AppError('Enter a fine-grained GitHub token.');
-  const repo=await github(token,`/repos/${repository}`);if(!repo.private)throw new AppError('Choose a private repository for your study backups.');
+  const repo=await github(token,`/repos/${repository}`);if(repo.private)throw new AppError('Choose a public repository for your study backups.');
   if(repo.permissions?.push===false)throw new AppError('This token needs Contents: Read and write on the selected repository.');
   await ensureUser(userId);const row=await database().prepare('SELECT data,sync_lock_until FROM settings WHERE user_id=?').bind(userId).first<{data:string;sync_lock_until:number}>();
   if(row!.sync_lock_until>Date.now())throw new AppError('A backup is running. Try connecting again when it finishes.',409);
