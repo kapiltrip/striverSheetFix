@@ -1,6 +1,8 @@
 import { createEmptyCard, fsrs, Rating, type CardInput, type Grade } from 'ts-fsrs';
 import type { Outcome, Problem, StudyState, StudyRecord } from './types';
 const scheduler=fsrs({request_retention:0.9,enable_fuzz:false});
+const DAY_MS=86_400_000;
+function dayNumber(value:string){return Math.floor(Date.parse(`${value}T00:00:00Z`)/DAY_MS);}
 export function sessionBudget(minutes:number){const recall=Math.min(10,Math.floor(minutes/5));const reflection=minutes>=30?5:2;return {recall,reflection,solve:minutes-recall-reflection};}
 export const newSchedule=(now=Date.now())=>createEmptyCard(new Date(now));
 export function rateRecall(card:CardInput,rating:number,now=Date.now()){
@@ -10,9 +12,18 @@ export function rateRecall(card:CardInput,rating:number,now=Date.now()){
 export function nextSolve(outcome:Outcome,streak:number,now=Date.now()){
   const nextStreak=outcome==='solved'?streak+1:0;
   const days=outcome==='retry'?1:outcome==='assisted'?2:[3,7,14,30,60][Math.min(nextStreak-1,4)];
-  return {solveStreak:nextStreak,solveDue:now+days*86_400_000};
+  return {solveStreak:nextStreak,solveDue:now+days*DAY_MS};
 }
 export function localDay(time:number,timezone='Asia/Kolkata'){return new Intl.DateTimeFormat('en-CA',{timeZone:timezone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(time));}
+export function planLoad(totalProblems:number,solvedProblems:number,startDate:string,targetDate:string,now=Date.now()){
+  const today=localDay(now),remaining=Math.max(0,totalProblems-solvedProblems),paused=today<startDate;
+  const effectiveStart=paused?startDate:today;
+  const daysRemaining=Math.max(0,dayNumber(targetDate)-dayNumber(effectiveStart)+1);
+  const minimumPerDay=daysRemaining?Math.floor(remaining/daysRemaining):remaining;
+  const maximumPerDay=daysRemaining?Math.ceil(remaining/daysRemaining):remaining;
+  const heavierDays=daysRemaining?remaining-minimumPerDay*daysRemaining:0;
+  return {today,startDate,targetDate,effectiveStart,paused,remaining,daysRemaining,minimumPerDay,maximumPerDay,heavierDays,overdue:today>targetDate&&remaining>0};
+}
 export function scheduleLabel(time:number|string|Date|null,now=Date.now()){
   if(time===null)return 'Not scheduled';
   const due=new Date(time).getTime(),remaining=due-now;
@@ -35,8 +46,8 @@ export function chooseNext(problems:Problem[],state:StudyState,now=Date.now()):{
   return next?{problem:next,reason:'Next in your A2Z journey'}:null;
 }
 export function weeklySummary(state:StudyState,now=Date.now()){
-  const attempts=state.attempts.filter(a=>a.at>=now-7*86_400_000);
-  const reviews=state.reviews.filter(r=>r.at>=now-7*86_400_000);
+  const attempts=state.attempts.filter(a=>a.at>=now-7*DAY_MS);
+  const reviews=state.reviews.filter(r=>r.at>=now-7*DAY_MS);
   return {minutes:attempts.reduce((n,a)=>n+a.minutes,0),attempts:attempts.length,independent:attempts.filter(a=>a.outcome==='solved').length,recall:reviews.length?Math.round(reviews.filter(r=>r.rating>1).length/reviews.length*100):null,reviewCount:reviews.length,activeDays:new Set(attempts.map(a=>localDay(a.at)).concat(reviews.map(r=>localDay(r.at)))).size};
 }
 export function recordFor(records:StudyRecord[],id:string){return records.find(r=>r.problemId===id);}

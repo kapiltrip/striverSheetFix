@@ -51,7 +51,8 @@ export async function POST(request:Request){try{
     const saved=await db.batch([db.prepare('INSERT OR IGNORE INTO reviews (id,user_id,data,created_at) SELECT ?,?,?,? FROM cards WHERE id=? AND user_id=? AND version=?').bind(r.id,userId,JSON.stringify(log),now,r.cardId,userId,r.expectedVersion),db.prepare('UPDATE cards SET data=?,version=version+1 WHERE id=? AND user_id=? AND version=?').bind(JSON.stringify(next),r.cardId,userId,r.expectedVersion),bump(userId)]);
     if(!saved[1].meta.changes)throw new AppError('This card changed elsewhere. Refresh your queue.',409);autoSync(userId);
   }else if(input.action==='settings'){
-    const values=z.object({dailyMinutes:z.number().int().min(15).max(120),targetDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),autoSync:z.boolean()}).parse(input);
+    const date=z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+    const values=z.object({dailyMinutes:z.number().int().min(15).max(120),startDate:date,targetDate:date,autoSync:z.boolean()}).refine(v=>v.startDate<=v.targetDate,{message:'The finish date must be on or after the resume date.',path:['targetDate']}).parse(input);
     const raw=await db.prepare('SELECT data FROM settings WHERE user_id=?').bind(userId).first<{data:string}>();
     await db.batch([db.prepare('UPDATE settings SET data=? WHERE user_id=?').bind(JSON.stringify({...JSON.parse(raw!.data),...values}),userId),bump(userId)]);
   }else throw new AppError('That action is not supported.');
