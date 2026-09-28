@@ -11,7 +11,17 @@ development data in this folder remain separate from the hosted database.
 
 ## Study flow
 
-Today recommends unfinished work, due coding reattempts, then the next unvisited A2Z problem. A problem notebook keeps code, approach notes, mistakes, original images, PDFs, and attempt history together. Drafts autosave to the server; an unsuccessful save preserves the editor and blocks navigation away from it.
+The current plan begins Monday, 5 October 2026 and keeps the 12 April 2027 finish date. With all 474 problems remaining, that is 190 study days at two or three items per day. Today recommends unfinished work, due coding reattempts, then the next item in the guided order. A problem notebook keeps code, approach notes, mistakes, original images, PDFs, and attempt history together. Drafts autosave to the server; an unsuccessful save preserves the editor and blocks navigation away from it.
+
+The first three sessions pair two algorithms with one array question:
+
+| Date | Algorithms | Array question |
+| --- | --- | --- |
+| 5 October | Selection Sort, Bubble Sort | Largest Element |
+| 6 October | Insertion Sorting, Merge Sorting | Second Largest Element |
+| 7 October | Quick Sorting, Linear Search | Check if the Array is Sorted II |
+
+The guided queue then continues through Arrays. The remaining Basics and Sorting entries come after Arrays, followed by the rest of A2Z. The problem sheet still displays all 474 items in the source order, so no lesson is removed. The first three dates move with the resume date if it is changed in settings.
 
 Each problem notebook shows a concise question summary and a little context before the editor, so the task is visible without leaving the study flow. The original exercise remains linked for its complete examples and constraints. Question text is searchable from the problem sheet.
 

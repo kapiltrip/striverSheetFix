@@ -37,13 +37,16 @@ export function dueWork(state:StudyState,now=Date.now()){
   return {cards:state.cards.filter(c=>new Date(c.schedule.due).getTime()<=now).sort((a,b)=>new Date(a.schedule.due).getTime()-new Date(b.schedule.due).getTime()),solves:state.records.filter(r=>r.solveDue!==null&&r.solveDue<=now).sort((a,b)=>a.solveDue!-b.solveDue!)};
 }
 export function chooseNext(problems:Problem[],state:StudyState,now=Date.now()):{problem:Problem;reason:string}|null{
-  const due=dueWork(state,now),byId=new Map(problems.map(p=>[p.id,p]));
-  const unfinished=state.records.filter(r=>r.status==='in-progress').sort((a,b)=>b.updatedAt-a.updatedAt)[0];
-  if(unfinished&&byId.has(unfinished.problemId))return {problem:byId.get(unfinished.problemId)!,reason:'Continue where you stopped'};
-  if(due.solves[0]&&byId.has(due.solves[0].problemId))return {problem:byId.get(due.solves[0].problemId)!,reason:'Ready for another attempt'};
+  const due=dueWork(state,now),byId=new Map(problems.map(p=>[p.id,p])),order=new Map(problems.map((p,index)=>[p.id,index]));
   const recorded=new Set(state.records.map(r=>r.problemId));
   const next=problems.find(p=>!recorded.has(p.id));
-  return next?{problem:next,reason:'Next in your A2Z journey'}:null;
+  const nextIndex=next?order.get(next.id)!:problems.length;
+  const isEarlier=(id:string)=>(order.get(id)??Infinity)<nextIndex;
+  const unfinished=state.records.filter(r=>r.status==='in-progress'&&isEarlier(r.problemId)).sort((a,b)=>b.updatedAt-a.updatedAt)[0];
+  if(unfinished&&byId.has(unfinished.problemId))return {problem:byId.get(unfinished.problemId)!,reason:'Continue where you stopped'};
+  const reattempt=due.solves.find(r=>isEarlier(r.problemId));
+  if(reattempt&&byId.has(reattempt.problemId))return {problem:byId.get(reattempt.problemId)!,reason:'Ready for another attempt'};
+  return next?{problem:next,reason:'Next in your study path'}:null;
 }
 export function weeklySummary(state:StudyState,now=Date.now()){
   const attempts=state.attempts.filter(a=>a.at>=now-7*DAY_MS);
