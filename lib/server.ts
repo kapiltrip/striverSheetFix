@@ -1,16 +1,19 @@
 import { env } from 'cloudflare:workers';
-import { getChatGPTUser } from '@/app/chatgpt-auth';
 import { z } from 'zod';
 import type { Settings,StudyState } from './types';
 import { localDay } from './revision';
 import { plannedStartDate } from './study-plan';
 export class AppError extends Error {constructor(message:string,public status=400){super(message);}}
+// This ID matches the former local preview, preserving its study database and
+// encrypted GitHub connection. It is never sent to an external identity service.
+export const LOCAL_USER_ID='local_seedy';
 export function database(){if(!env.DB)throw new AppError('Your study storage is temporarily unavailable. Your draft has been kept.',503);return env.DB;}
 export function bucket(){if(!env.BUCKET)throw new AppError('Image storage is temporarily unavailable.',503);return env.BUCKET;}
 export async function identity(request:Request,write=false){
-  const user=await getChatGPTUser();if(!user)throw new AppError('Sign in to open your study space.',401);
-  if(write){const origin=request.headers.get('origin');if(!origin||origin!==new URL(request.url).origin)throw new AppError('Please save from your Recall app.',403);}
-  return user.userId;
+  const url=new URL(request.url);
+  if(url.hostname!=='127.0.0.1'&&url.hostname!=='localhost')throw new AppError('Open Recall through its local launcher.',403);
+  if(write){const origin=request.headers.get('origin');if(!origin||origin!==url.origin)throw new AppError('Please save from your local Recall app.',403);}
+  return LOCAL_USER_ID;
 }
 export function reply(data:unknown,status=200){return Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});}
 export function failure(error:unknown){if(error instanceof AppError)return reply({error:error.message},error.status);if(error instanceof z.ZodError)return reply({error:error.issues[0]?.message||'Please check the form.'},400);console.error('Recall request failed',error instanceof Error?error.message:'Unknown error');return reply({error:'Something could not be saved. Your draft is still here; please try again.'},503);}

@@ -2,12 +2,17 @@
 
 A personal study app for Kapil’s 45–60 minute sessions. The current A2Z catalogue contains 474 problems, with links back to takeUforward and the exercise platforms.
 
-On Windows, double-click `Open-Striver.cmd` to open your existing private
-[Recall workspace](https://kapil-dsa-practice.kapiltripathi267.chatgpt.site) in
-Chrome. This uses the online app's saved progress. The local source and
-development data in this folder remain separate from the hosted database.
+On Windows, double-click `Open-Striver.cmd`. It starts Recall on your PC and
+opens `http://127.0.0.1:5173/` in Chrome. Your study records and uploaded files
+stay in this folder’s ignored `.wrangler/state/` directory. The launcher reuses
+the local database and GitHub connection from the earlier preview; it does not
+use ChatGPT Sites or require a ChatGPT sign-in.
 
-[Study flow](#study-flow) · [GitHub backups](#github-backups) · [Development](#development) · [Verification](#verification)
+The server keeps running after you close Chrome, so the next launch is quick.
+Double-click `Close-Striver.cmd` when you want to stop it; your saved data stays
+on disk.
+
+[Study flow](#study-flow) · [GitHub backups](#github-backups) · [Local setup](#local-setup-and-development) · [Verification](#verification)
 
 ## Study flow
 
@@ -31,24 +36,25 @@ Daily summaries use Asia/Kolkata dates. Weekly metrics report actual attempts an
 
 ## GitHub backups
 
-The app is configured to store its readable backups under `recall/` in the public repository `kapiltrip/cpp-and-scripting-practice`. Connect in the GitHub view using a fine-grained token restricted to that repository, with Contents: Read and write. The token is encrypted with AES-GCM on the server and is never included in the backup.
+The app can store readable backups under `recall/` in the public repository `kapiltrip/cpp-and-scripting-practice`. Connect in the GitHub view using a fine-grained token restricted to that repository, with Contents: Read and write. The token is encrypted with AES-GCM in local storage and is never included in the backup. Code and notes sent to this repository are public.
 
 Automatic backups run after attempts, recall reviews, and attachments. Pending work retries while the app is open; Back up now performs an immediate attempt. The server records success only after updating the Git reference. Existing files outside the app’s `recall/` directory are preserved, and reference updates never force-push.
 
 A backup contains readable problem notebooks, complete solution source files, day indexes, original uploaded files, and a versioned state.json for recovery. Restore previews the contents, merges missing history and attachments, and preserves newer records already saved in the app. Large restores may require retrying; merges are designed to resume without duplicating history.
 
-## Development
+## Local setup and development
 
-The app uses React/TypeScript, Vinext, Cloudflare D1 and R2, and ts-fsrs. Hosted identity is provided by private Sites access; every data endpoint checks the current user and scopes queries to that user. Write endpoints also check the request origin.
+The app uses React/TypeScript, Vinext, the local Cloudflare D1/R2 emulator, and ts-fsrs. No Cloudflare account is needed. It listens only on the PC’s loopback address. Data requests reject other hostnames, and writes must come from the same origin. There is one local study space for this PC.
 
-1. Install the locked dependencies with `npm run install:ci` using Node 22.13 or later.
-2. Copy .env.example to .env and set GITHUB_ENCRYPTION_KEY to 32 cryptographically random bytes encoded as hex. Keep the same key when redeploying so stored connections remain readable.
-3. Build once with `npm run build`, then apply `drizzle/0000_fair_shape.sql` to the local D1 database using the generated `dist/server/wrangler.json` configuration and `.wrangler/state` persistence directory.
-4. Start with `npm run dev`. The local preview offers a simulated sign-in; production uses the Sites owner’s identity.
+1. Install Node.js 22.13 or later and run `npm ci` if `node_modules/` is absent. The Windows launcher also detects the Node.js bundled with Codex on this PC.
+2. Double-click `Open-Striver.cmd`. It creates the local database on first use, starts the server if needed, and opens Chrome. On subsequent launches, it reuses the running server.
+3. For terminal development, run `npm run db:init` once and `npm run dev`. `npm run build` checks the production build. `npm start` serves that build locally on port 8787.
+
+To enable or retain GitHub backups, keep `.env` with `GITHUB_ENCRYPTION_KEY` set to the same 64-character hex key used when the GitHub connection was created. Copy `.env.example` for a fresh setup and generate a new 32-byte random key. Keep `.env` and `.wrangler/state/` outside Git; back up both if you move PCs. Changing the key makes the saved GitHub connection unreadable until reconnected.
 
 Run `npm run catalog:questions` when the source catalogue changes to refresh the concise in-app question summaries from the linked exercise or lesson pages.
 
-The GitHub token is entered in the app, never placed in source files. Production encryption configuration is managed as a Sites secret. App data is stored in D1/R2; the browser is not the authoritative database. Internet connectivity is required for saved study data and backups.
+The GitHub token is entered in the app, never placed in source files. Internet is needed for GitHub backups and linked exercise pages; saving study progress on this PC works offline.
 
 ## Verification
 

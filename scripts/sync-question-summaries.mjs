@@ -57,7 +57,7 @@ function metaDescription(html){
 }
 
 async function fetchText(url,options){
-  const response=await fetch(url,{...options,headers:{'User-Agent':'Recall catalog updater (+private study app)',Accept:'text/html,application/json',...options?.headers},signal:AbortSignal.timeout(20000)});
+  const response=await fetch(url,{...options,headers:{'User-Agent':'Recall catalog updater (+local study app)',Accept:'text/html,application/json',...options?.headers},signal:AbortSignal.timeout(20000)});
   if(!response.ok)throw new Error(`${response.status} ${response.statusText}`);
   return response.text();
 }
